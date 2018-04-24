@@ -1,9 +1,11 @@
 package com.example.harry.finalproject;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -17,6 +19,7 @@ import android.util.SparseArray;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -28,8 +31,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -37,7 +44,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-    private static String TAG = "Main Activity";
+    private static String TAG = "---------------------Main Activity------------------";
 
     /** Constant to perform a read file request. */
     private static final int READ_REQUEST_CODE = 42;
@@ -50,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
 
     /** Can I write to the public storage? */
     private boolean canWriteToPublicStorage = false;
+
+    private Bitmap currentBitmap;
 
     private static Map list;
 
@@ -115,6 +124,38 @@ public class MainActivity extends AppCompatActivity {
         list = new HashMap();
     }
 
+    @Override
+    public void onActivityResult(final int requestCode,  int resultCode,
+                                  final Intent data) {
+
+        if (resultCode != Activity.RESULT_OK) {
+            Log.d(TAG,"onActivityResult with code " + requestCode + " failed");
+            if (resultCode == IMAGE_CAPTURE_REQUEST_CODE) {
+                pictureRequestActive = false;
+            }
+            return;
+        }
+
+        Uri currentPictureURI;
+        if (requestCode == READ_REQUEST_CODE) {
+            currentPictureURI = data.getData();
+        } else if (requestCode == IMAGE_CAPTURE_REQUEST_CODE) {
+            Log.d(TAG, "The picture is detected");
+            currentPictureURI = Uri.fromFile(currenPictureFile);
+            pictureRequestActive = false;
+            if (canWriteToPublicStorage) {
+                Log.w(TAG, "we can do something here");
+            }
+        } else {
+            Log.d(TAG, "Unhandled activityResult with code " + requestCode);
+            return;
+        }
+
+        // Now load the photo into the view
+        Log.d(TAG, "Photo selection produced URI " + currentPictureURI);
+        loadPhoto(currentPictureURI);
+    }
+
     /**
      * Go to the added list view.
      */
@@ -154,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
     protected void takePicture() {
         if (pictureRequestActive) {
             Log.w(TAG, "Opening camera in progress");
+            return;
         }
 
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -164,10 +206,9 @@ public class MainActivity extends AppCompatActivity {
                     Toast.LENGTH_SHORT).show();
             return;
         }
-
-//        Uri pictureURI = FileProvider.getUriForFile(this,
-//                "com.example.harry.finalproject.fileprovider", currenPictureFile);
-//        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, pictureURI);
+        Uri pictureURI = FileProvider.getUriForFile(this,
+                "com.example.harry.finalproject.fileprovider", currenPictureFile);
+        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, pictureURI);
         pictureRequestActive = true;
         startActivityForResult(takePictureIntent, IMAGE_CAPTURE_REQUEST_CODE);
     }
@@ -178,6 +219,58 @@ public class MainActivity extends AppCompatActivity {
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
         startActivityForResult(intent, READ_REQUEST_CODE);
+    }
+
+
+    private void loadPhoto(final Uri currentPictureURI) {
+
+        if (currentPictureURI == null) {
+            Toast.makeText(getApplicationContext(), "No image seleted",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String uriScheme = currentPictureURI.getScheme();
+
+        /**Code copied from MP6 to get image data.
+         * Get the byte[] of imageData, whoch will be convered to bitmap
+         */
+        byte[] imageData;
+        try {
+            switch (uriScheme) {
+                case "file":
+                    imageData = FileUtils.readFileToByteArray(new File(currentPictureURI.getPath()));
+                    break;
+                case "content":
+                    InputStream inputStream = getContentResolver().openInputStream(currentPictureURI);
+                    assert inputStream != null;
+                    imageData = IOUtils.toByteArray(inputStream);
+                    inputStream.close();
+                    break;
+                default:
+                    Toast.makeText(getApplicationContext(), "Unknown scheme " + uriScheme,
+                            Toast.LENGTH_LONG).show();
+                    return;
+            }
+        } catch (IOException e) {
+            Toast.makeText(getApplicationContext(), "Error processing file",
+                    Toast.LENGTH_LONG).show();
+            Log.w(TAG, "Error processing file: " + e);
+            return;
+        }
+
+        currentBitmap = BitmapFactory.decodeByteArray(imageData, 0,imageData.length);
+
+        updateCurrentBitmap(currentBitmap, true);
+    }
+
+
+    void updateCurrentBitmap(final Bitmap setBitmap, final boolean restInfo) {
+        currentBitmap = setBitmap;
+        ImageView imgView = findViewById(R.id.ImageView);
+        imgView.setImageBitmap(currentBitmap);
+        Log.d(TAG, "The upc code is " + readUPC(currentBitmap));
+
     }
 
     protected void showResults(final String jsonResult) {
@@ -194,20 +287,39 @@ public class MainActivity extends AppCompatActivity {
      * @return THe string of the nunber on the UPC.
      */
     protected String readUPC(Bitmap bitmap) {
+        if (bitmap == null) {
+            return "No input yet";
+        }
         BarcodeDetector detector =
                 new BarcodeDetector.Builder(getApplicationContext())
                         .setBarcodeFormats(0)
                         .build();
         if (!detector.isOperational()) {
-            Log.d(TAG, "Detector was not operational ---------");
-            return null;
+            Log.d(TAG, "Detector was not operational");
+            return "Invalid!";
         }
         Log.d(TAG, "Detector setup successful");
 
         Frame frame = new Frame.Builder().setBitmap(bitmap).build();
         SparseArray<Barcode> barcodes = detector.detect(frame);
 
-        Barcode thisCode = barcodes.valueAt(0);
-        return thisCode.rawValue;
+        //plot the fram as a bitmap for debugg
+        Bitmap frameBitmap = frame.getBitmap();
+        Log.d(TAG, frame.toString());
+        try {
+            Barcode thisCode = barcodes.valueAt(0);
+            return thisCode.rawValue;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return e.toString();
+        }
+
     }
+
+    private void showDebugPic(final Bitmap bitmap) {
+        ImageView view = findViewById(R.id.imageDebug);
+        view.setImageBitmap(bitmap);
+        Log.d(TAG, "Debug picture displatede");
+    }
+    public String upcCode = readUPC(currentBitmap);
+
 }

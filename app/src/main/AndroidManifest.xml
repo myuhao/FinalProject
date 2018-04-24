@@ -19,7 +19,7 @@
         <activity android:name=".addedActivity"></activity>
         <provider
             android:name="android.support.v4.content.FileProvider"
-            android:authorities="edu.illinois.cs.cs125.finalproject.fileprovider"
+            android:authorities="com.example.harry.finalproject.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
