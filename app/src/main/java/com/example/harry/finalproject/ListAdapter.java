@@ -52,8 +52,8 @@ public class ListAdapter extends BaseAdapter {
         Product item = (Product) getItem(index);
 
         subtitleTextView.setText(item.getName());
-        detailTextView.setText(Integer.toString(item.getCalories()));
-
+        detailTextView.setText(String.format("%.0f kCal", item.getCalories()
+                * item.getAmount() / 100));
 //        Bitmap picture = BitmapFactory.decodeByteArray(item.getPicutre(),
 //                0, item.getPicutre().length);
 //        thumbnailImageView.setImageBitmap(picture);

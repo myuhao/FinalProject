@@ -63,7 +63,7 @@ public class ReadJson {
      * @param id the lookup id.
      * @return the nutrient value per 100g of the product. -1 if not found.
      */
-    public static int getCalPer100g(final String json, final int id) {
+    public static double getCalPer100g(final String json, final int id) {
         if (json != null) {
             JsonParser parser = new JsonParser();
             JsonObject results = parser.parse(json).getAsJsonObject();
@@ -73,10 +73,10 @@ public class ReadJson {
             for (int i = 0; i < nutrients.size(); i++) {
                 JsonObject currentNut = nutrients.get(i).getAsJsonObject();
                 if (currentNut.get("nutrient_id").getAsInt() == id) {
-                    return currentNut.get("value").getAsInt();
+                    return currentNut.get("value").getAsDouble();
                 }
             }
         }
-        return -1;
+        return 0.0;
     }
 }

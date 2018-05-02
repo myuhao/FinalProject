@@ -9,7 +9,12 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="298dp">
+        android:layout_height="319dp">
+
+        <TextView
+            android:id="@+id/amountInput"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
         <ImageView
             android:id="@+id/ImageView"
@@ -42,15 +47,22 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            app:srcCompat="@android:drawable/ic_menu_upload" />
+            app:srcCompat="@drawable/ic_ok" />
 
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="203dp"
+        android:layout_height="251dp"
         android:orientation="vertical">
 
+
+        <EditText
+            android:id="@+id/editAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Amount of intake in gram"
+            android:inputType="number" />
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -88,18 +100,13 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/home"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="HOME" />
-
-        <Button
             android:id="@+id/added"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="ADDED" />
+            android:color="#44B3C2"
+            android:text="ADDED"
+            android:textColor="#FFFFFF" />
     </LinearLayout>
 
 </LinearLayout>

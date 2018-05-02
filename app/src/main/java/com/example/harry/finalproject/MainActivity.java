@@ -2,6 +2,7 @@ package com.example.harry.finalproject;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -17,7 +18,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -131,20 +134,31 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(final View v) {
                 Log.d(TAG, "DO something with the start API calling button");
+                if (upcCode == null) {
+                    Toast.makeText(getApplicationContext(),
+                            "Please scan a picture first", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 sendAPIButton();
             }
         });
 
-        final Button homeButton = (Button) findViewById(R.id.home);
-        homeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //readUPC(currentBitmap);
-                Log.d(TAG, "Gloval vaiable upcCode is " + upcCode);
-                Log.d(TAG, "THe name of the product is " + productName);
-                Log.d(TAG, "The calories /100g is " + Integer.toString(nutVal));
-            }
-        });
+        final TextView amountInput = findViewById(R.id.amountInput);
+
+
+        final EditText editAmount = findViewById(R.id.editAmount);
+        editAmount.setVisibility(View.INVISIBLE);
+
+        //For debug use only
+//        final Button homeButton = (Button) findViewById(R.id.home);
+//        homeButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                //readUPC(currentBitmap);
+//                Log.d(TAG, "Gloval vaiable upcCode is " + upcCode);
+//                Log.d(TAG, "THe name of the product is " + productName);
+//            }
+//        });
 
         //First hide progress bar, made visibale later
         ProgressBar progressBar = findViewById(R.id.progressBar);
@@ -401,7 +415,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public int nutVal = 0;
+    public double nutVal = 0.0;
     public String productName = "";
 
     /**
@@ -528,8 +542,11 @@ public class MainActivity extends AppCompatActivity {
         ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.INVISIBLE);
         TextView detailInfo = (TextView) findViewById(R.id.detailInfo);
-        detailInfo.setText(productName + " : " + nutVal + "kcal/100g");
+        detailInfo.setText(productName + " : " + nutVal + " kCal/100 g");
         detailInfo.setVisibility(View.VISIBLE);
+        EditText editAmount = findViewById(R.id.editAmount);
+        editAmount.setVisibility(View.VISIBLE);
+        showKeyboard(editAmount);
     }
 
     /**
@@ -537,16 +554,42 @@ public class MainActivity extends AppCompatActivity {
      */
     protected void addProductToList() {
         list.put(productName, nutVal);
-        Product newItem = new Product(productName, Integer.valueOf(nutVal));
+        Product newItem = new Product(productName, nutVal);
 //        ByteArrayOutputStream stream = new ByteArrayOutputStream();
 //        currentBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
 //        byte[] newPicture = stream.toByteArray();
 //        newItem.setPicutre(newPicture);
         //Log.d(TAG, "New item is null?!!!!" + newItem.toString());
+        EditText editAmount = findViewById(R.id.editAmount);
+        double amount = Double.parseDouble(editAmount.getText().toString());
+        newItem.setAmount(amount);
+        hideKeyboard();
+        /**
+         * Prevent adding empty item.
+         */
+        if (newItem.toString() == null) {
+            return;
+        }
         allItem.add(newItem);
         Toast.makeText(getApplicationContext(),
                 "This product has been added to the list",
                 Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * Hide the key board after input.
+     */
+    void hideKeyboard() {
+        InputMethodManager manager =
+                (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        manager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
+                InputMethodManager.HIDE_NOT_ALWAYS);
+    }
+
+    void showKeyboard(EditText view) {
+        InputMethodManager manager =
+                (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        manager.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+
+    }
 }

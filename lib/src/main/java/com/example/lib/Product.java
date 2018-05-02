@@ -5,11 +5,11 @@ package com.example.lib;
  */
 public class Product {
     private String name;
-    private int calories;
-    private int amount;
+    private double calories;
+    private double amount;
     private byte[] picutre;
 
-    public Product(final String setName, final int setCal) {
+    public Product(final String setName, final double setCal) {
         this.name = setName;
         this.calories = setCal;
     }
@@ -18,19 +18,19 @@ public class Product {
         this.name = name;
     }
 
-    public void setCalories(int calories) {
+    public void setCalories(double calories) {
         this.calories = calories;
     }
 
-    public void setAmount(int amount) {
+    public void setAmount(double amount) {
         this.amount = amount;
     }
 
-    public int getAmount() {
+    public double getAmount() {
         return amount;
     }
 
-    public int getCalories() {
+    public double getCalories() {
         return calories;
     }
 
