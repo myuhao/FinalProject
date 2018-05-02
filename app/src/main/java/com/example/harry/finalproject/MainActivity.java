@@ -21,8 +21,19 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import com.example.lib.ReadJson;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
@@ -33,6 +44,8 @@ import com.google.gson.JsonParser;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +55,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
     private static String TAG = "---------------------Main Activity------------------";
@@ -58,7 +72,16 @@ public class MainActivity extends AppCompatActivity {
     /** Can I write to the public storage? */
     private boolean canWriteToPublicStorage = false;
 
+    //Picture of the UPC code to be looked up
     private Bitmap currentBitmap;
+
+    //Copied from MP6 and LAB11
+    private static RequestQueue requestQueue;
+
+    //Global variable that represet the barcode from the bitmap object
+    public String upcCode;
+
+    private boolean requestFinished = false;
 
     private static Map list;
 
@@ -67,11 +90,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        requestQueue = Volley.newRequestQueue(this);
+
         final Button goToAdded = (Button) findViewById(R.id.added);
         goToAdded.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "Added button clicked-----------------------");
+                Log.d(TAG, "Added button clicked");
                 goToAdded();
             }
         });
@@ -80,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         takePicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                Log.d(TAG, "DO something with the take picture button-----------------------");
+                Log.d(TAG, "DO something with the take picture button");
                 takePicture();
             }
         });
@@ -89,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
         openFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                Log.d(TAG, "DO something with the take load button------------------------");
+                Log.d(TAG, "DO something with the take load button");
                 getLocalPictures();
             }
         });
@@ -98,13 +123,29 @@ public class MainActivity extends AppCompatActivity {
         startCall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                Log.d(TAG, "DO something with the start API calling button------------------");
+                Log.d(TAG, "DO something with the start API calling button");
+                sendAPIButton();
             }
         });
 
-//        ProgressBar progressBar = findViewById(R.id.progressBar);
-//        progressBar.setVisibility(View.INVISIBLE);
+        final Button homeButton = (Button) findViewById(R.id.home);
+        homeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //readUPC(currentBitmap);
+                Log.d(TAG, "Gloval vaiable upcCode is " + upcCode);
+                Log.d(TAG, "THe name of the product is " + productName);
+                Log.d(TAG, "The calories /100g is " + Integer.toString(nutVal));
+            }
+        });
 
+        //First hide progress bar, made visibale later
+        ProgressBar progressBar = findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.INVISIBLE);
+
+        //Hide the picture until readi to display.
+        ImageView img = (ImageView) findViewById(R.id.ImageView);
+        img.setVisibility(View.INVISIBLE);
 
         /*
          * Here we check for permission to write to external storage and request it if necessary.
@@ -191,7 +232,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private boolean pictureRequestActive = false;
 
-
+    /**
+     * Open the camera to take picture.
+     * Copied from MP6
+     */
     protected void takePicture() {
         if (pictureRequestActive) {
             Log.w(TAG, "Opening camera in progress");
@@ -213,7 +257,9 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(takePictureIntent, IMAGE_CAPTURE_REQUEST_CODE);
     }
 
-
+    /**
+     * Get the picture.
+     */
     protected void getLocalPictures() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -221,7 +267,10 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, READ_REQUEST_CODE);
     }
 
-
+    /**
+     * Get am img and convert it to Bitmap object for handling.
+     * @param currentPictureURI - No idea, copied from MP6.
+     */
     private void loadPhoto(final Uri currentPictureURI) {
 
         if (currentPictureURI == null) {
@@ -264,14 +313,126 @@ public class MainActivity extends AppCompatActivity {
         updateCurrentBitmap(currentBitmap, true);
     }
 
-
+    /**
+     * Update the current bitmap object.
+     * Also update the global UPC code variable using readUPC().
+     * @param setBitmap - New bitmap to set.
+     * @param restInfo - Not used. Copied from MP6.
+     */
     void updateCurrentBitmap(final Bitmap setBitmap, final boolean restInfo) {
         currentBitmap = setBitmap;
         ImageView imgView = findViewById(R.id.ImageView);
         imgView.setImageBitmap(currentBitmap);
+        imgView.setVisibility(View.VISIBLE);
+        requestFinished = false;
+        readUPC(currentBitmap);
         Log.d(TAG, "The upc code is " + readUPC(currentBitmap));
 
     }
+
+    /**
+     * Called when the upload button is pushed.
+     */
+    private void startAPICall() {
+//        if (currentBitmap == null) {
+//            return;
+//        }
+
+        //Use LAb 11 API call codes here to test
+        requestNDBNumber(upcCode);
+        //requestNutrientValues("45085820");
+        Log.d(TAG, "Start API call finished");
+    }
+
+
+    public String NDBCode;
+
+    /**
+     * From the UPC code, serach database to get the NDB number.
+     * Then call requestNutrientValues().
+     * @param lookUPCCode - UPC code to look up.
+     */
+    protected void requestNDBNumber(final String lookUPCCode) {
+        String beforeUPC = "https://api.nal.usda.gov/ndb/search/?format=json&q=";
+        String afterUPC = "&sort=n&max=25&offset=0&api_key=eLDsea1EUSgu1EOIbm9xR15mOAtVWgo9gVFKMUWM";
+        String url = beforeUPC + lookUPCCode + afterUPC;
+
+        try {
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                    Request.Method.GET,
+                    url,
+                    null,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(final JSONObject response) {
+                            Log.d(TAG, response.toString());
+                            NDBCode = ReadJson.getNDB(response.toString());
+                            Log.d(TAG, NDBCode);
+
+                            Log.d(TAG, "Finished Searching for NDB code, starting" +
+                                    "seach for food");
+                            requestNutrientValues(NDBCode);
+                            Log.d(TAG, "NDB request finished");
+
+
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(final VolleyError error) {
+                    Log.w(TAG, error.toString());
+                    Toast.makeText(getApplicationContext(),
+                            "Cannot find this product in the database, please try again",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+            requestQueue.add(jsonObjectRequest);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(),
+                    "Something went wrong",
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public int nutVal = 0;
+    public String productName = "";
+
+    /**
+     * Look up specific nutrient value per 100 g and store in nutVal.
+     * Called during the NDB request.
+     * @param NDBCode - The NDB code.
+     */
+    protected void requestNutrientValues(final String NDBCode) {
+
+        String afterDNB = "&type=f&api_key=eLDsea1EUSgu1EOIbm9xR15mOAtVWgo9gVFKMUWM";
+        String beforeNDB = "https://api.nal.usda.gov/ndb/reports/?ndbno=";
+        String url = beforeNDB + NDBCode + afterDNB;
+
+        try {
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                    Request.Method.GET,
+                    url,
+                    null,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(final JSONObject response) {
+                            productName = ReadJson.getName(response.toString());
+                            nutVal = ReadJson.getCalPer100g(response.toString(),208);
+                            Log.d(TAG, "Nutrient value found!");
+                            requestFinished = true;
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(final VolleyError error) {
+                    Log.w(TAG, error.toString());
+                }
+            });
+            requestQueue.add(jsonObjectRequest);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
     protected void showResults(final String jsonResult) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -308,8 +469,12 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, frame.toString());
         try {
             Barcode thisCode = barcodes.valueAt(0);
-            return thisCode.rawValue;
+            upcCode = thisCode.rawValue;
+            return thisCode.rawValue.toString();
         } catch (ArrayIndexOutOfBoundsException e) {
+            upcCode = "";
+            Toast.makeText(getApplicationContext(),"No Barcode found, try again?",
+                    Toast.LENGTH_LONG).show();
             return e.toString();
         }
 
@@ -320,6 +485,42 @@ public class MainActivity extends AppCompatActivity {
         view.setImageBitmap(bitmap);
         Log.d(TAG, "Debug picture displatede");
     }
-    public String upcCode = readUPC(currentBitmap);
+
+    /**
+     * Initiate an async task in Task.java. Use the upc code from scanner.
+     */
+    public void sendAPIButton() {
+        new Tasks.APICalling(MainActivity.this, requestQueue).execute(upcCode);
+        Log.d(TAG, "DId I get the NDB number?" + NDBCode);
+        //new Tasks.GetNameAndOther(MainActivity.this, requestQueue).execute(NDBCode);
+//        startAPICall();
+////                while (requestFinished == false) {
+////                    ProgressBar progressBar = findViewById(R.id.progressBar);
+////                    progressBar.setVisibility(View.VISIBLE);
+////                }
+//        ProgressBar progressBar = findViewById(R.id.progressBar);
+//        progressBar.setVisibility(View.INVISIBLE);
+//        updateDetailList();
+//        Log.d(TAG, "After 3s, the name is " + productName);
+    }
+
+    /**
+     * Initiate the second API call in AnotherTask.java.
+     * Get called in Task.java and use NDB code.
+     */
+    public void startGetProductInfo() {
+        new AnotherTask.GetProductInfo(MainActivity.this,
+                requestQueue).execute(NDBCode);
+    }
+
+    /**
+     * Update the textView.
+     * Get called in the AnotherTask.java.
+     */
+    protected void updateDetailList() {
+        TextView detailInfo = (TextView) findViewById(R.id.detailInfo);
+        detailInfo.setText(productName + " : " + nutVal + "kcal/100g");
+        detailInfo.setVisibility(View.VISIBLE);
+    }
 
 }

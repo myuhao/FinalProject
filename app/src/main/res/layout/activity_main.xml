@@ -62,6 +62,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:srcCompat="@android:color/transparent" />
+
+        <TextView
+            android:id="@+id/detailInfo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="TextView" />
     </LinearLayout>
 
     <LinearLayout

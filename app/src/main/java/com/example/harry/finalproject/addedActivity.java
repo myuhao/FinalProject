@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 public class addedActivity extends AppCompatActivity {
     private static String TAG = "Added activity";
@@ -28,5 +29,12 @@ public class addedActivity extends AppCompatActivity {
     protected void goToHome() {
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
+    }
+
+    protected void setList(final String item) {
+        TextView list = findViewById(R.id.textView5);
+        list.setText(item);
+        list.setVisibility(View.VISIBLE);
+        return;
     }
 }
