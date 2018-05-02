@@ -86,11 +86,15 @@ public class Tasks {
                         Toast.makeText(activity, "We cannot find this product in " +
                                         "USDA database, sorry!",
                                 Toast.LENGTH_SHORT).show();
+                        ProgressBar progressBar = activity.findViewById(R.id.progressBar);
+                        progressBar.setVisibility(View.INVISIBLE);
                     }
                 });
                 requestQueue.add(jsonObjectRequest);
             } catch (Exception e) {
                 e.printStackTrace();
+                ProgressBar progressBar = activityWeakReference.get().findViewById(R.id.progressBar);
+                progressBar.setVisibility(View.INVISIBLE);
             }
 
             return null;

@@ -33,6 +33,7 @@ import com.android.volley.toolbox.StringRequest;
 
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.lib.Product;
 import com.example.lib.ReadJson;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
@@ -47,10 +48,12 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 import org.w3c.dom.Text;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -83,7 +86,10 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean requestFinished = false;
 
-    private static Map list;
+    //A map to store each object and its nutrient value.
+    private static Map list = new HashMap();
+
+    public static ArrayList<Product> allItem = new ArrayList<>(0);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.d(TAG, "Added button clicked");
+                addProductToList();
                 goToAdded();
             }
         });
@@ -518,9 +525,28 @@ public class MainActivity extends AppCompatActivity {
      * Get called in the AnotherTask.java.
      */
     protected void updateDetailList() {
+        ProgressBar progressBar = findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.INVISIBLE);
         TextView detailInfo = (TextView) findViewById(R.id.detailInfo);
         detailInfo.setText(productName + " : " + nutVal + "kcal/100g");
         detailInfo.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Add the looked up item and its calories to this list.
+     */
+    protected void addProductToList() {
+        list.put(productName, nutVal);
+        Product newItem = new Product(productName, Integer.valueOf(nutVal));
+//        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//        currentBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+//        byte[] newPicture = stream.toByteArray();
+//        newItem.setPicutre(newPicture);
+        //Log.d(TAG, "New item is null?!!!!" + newItem.toString());
+        allItem.add(newItem);
+        Toast.makeText(getApplicationContext(),
+                "This product has been added to the list",
+                Toast.LENGTH_SHORT).show();
     }
 
 }

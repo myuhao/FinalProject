@@ -8,22 +8,10 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <ScrollView
+        <ListView
+            android:id="@+id/listView"
             android:layout_width="match_parent"
-            android:layout_height="442dp">
-
-            <TextView
-                android:id="@+id/textView5"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="List looked up items" />
-        </ScrollView>
-
-        <TextView
-            android:id="@+id/total"
-            android:layout_width="match_parent"
-            android:layout_height="61dp"
-            android:text="Show Total Amount here" />
+            android:layout_height="505dp" />
 
         <LinearLayout
             android:layout_width="match_parent"

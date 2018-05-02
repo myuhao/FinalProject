@@ -5,8 +5,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class addedActivity extends AppCompatActivity {
     private static String TAG = "Added activity";
@@ -24,6 +29,8 @@ public class addedActivity extends AppCompatActivity {
                 goToHome();
             }
         });
+
+        setList("unde");
     }
 
     protected void goToHome() {
@@ -32,9 +39,12 @@ public class addedActivity extends AppCompatActivity {
     }
 
     protected void setList(final String item) {
-        TextView list = findViewById(R.id.textView5);
-        list.setText(item);
-        list.setVisibility(View.VISIBLE);
-        return;
+        ListView myListView = findViewById(R.id.listView);
+        String[] list = new String[] {"aa", "bb", "cc"};
+        ArrayList<String> test = new ArrayList<>(Arrays.asList(list));
+
+        ListAdapter adapter = new ListAdapter(this, MainActivity.allItem);
+        myListView.setAdapter(adapter);
+
     }
 }
