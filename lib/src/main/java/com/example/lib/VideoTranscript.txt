@@ -1,0 +1,28 @@
+Hello!
+
+I am very excited today to show you my first Android application! It is called Scan Calories. As the name suggests, it scans the food you eat and record how many calories are in there. Keeping tracking of how many calories of food you eat is a key aspect of healthy lifestyle, and my application can help you live a healthier life!
+This is easily achieved by scanning the barcode of the food and search for it in the USDA database. I will be demonstrating some of its features using this Android emulator.
+
+Let me first go to the menu, scroll down, and open my application. This application reads barcodes. You can choose either take a picture, or use a local picture of the barcode to obtain its nutrient information. Let us first open a local file.
+
+
+Let's say you just had an energy bar. So I will simply choose the picture, and the application will display the barcode on its screen. Now you can press the check icon to get its information! Just wait for one second. It gets the energy information, but I will also need to tell it how much I ate. So let's say I eat about  45 grams. I will type in this number as prompted.
+
+And press enter. It shows us the name of the food and how much energy there are in 100 grams of the energy bar. Now I just simply press added, the application will record this amount of calories and show this item in the list. It will also calculate the total calories of all your food, display it at the bottom of the screen. Easy!
+
+We can do it again. By pressing the home button, it takes us back.  A good feature of barcodes is that no matter which orientation it is, it always reads well! Let us do it again with a rotated barcode of Nutella! Picture loaded, getting energy information, and input the amount I just eat. Let's say about 10 grams. Enter, and added. Notice how the total calories are updated and the list just got longer.
+
+I would like to show this process using the camera, however, there is no real camera in the emulator. There is only a fake scene, and no food or barcode. But conveniently, I will use this camera to show you what will happen if I get a bad scan, where there is not a valid barcode. In this case, just an empty room.
+
+By press the camera icon, I can take a picture. What you are seeing now is just a fake scene, and there is no barcode. So if I take a picture,
+
+and use it,
+
+the application will tell me that no barcode is detected so I know I will have to take a better picture.
+
+I will load another item while I discuss what other feature I can add.
+
+More can be built on this barebone application. More nutrient values including protein, fatty acid, and carbohydrates can be retrieved from the same database, which can be extremely helpful to diabetes patients who require close monitoring of their diet. A better user interface should be implemented. I am very bad at art design, so this application looks very bad. The USDA database is limited, and some food item was not listed. I also want to add other features such as direct search, so food such as fresh vegetables that do not have a barcode can also be recorded.
+
+Thank you for checking out my application, you can also find it on my GitHub page. Thank you and see you next time.
+
