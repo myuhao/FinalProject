@@ -5,3 +5,5 @@ We will seach for this product in the USDA database and retrive the calorie valu
 Provide us with the amount (in GRAM) of intake, it will be recorded!
 
 UI is very simple and buggy.
+
+See Demo videa at https://youtu.be/u8GIBrViSow
