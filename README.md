@@ -1,4 +1,4 @@
-# FinalProject
+# FinalProject of UIUC CS 125
 This is an android app that help you track your calorie intake!
 Simply scan the barcode of your food, or choose one from your local library.
 We will seach for this product in the USDA database and retrive the calorie value.
