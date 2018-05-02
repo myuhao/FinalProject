@@ -7,3 +7,7 @@ Provide us with the amount (in GRAM) of intake, it will be recorded!
 UI is very simple and buggy.
 
 See Demo videa at https://youtu.be/u8GIBrViSow
+
+
+Tested on SDK Android 8.1 API level 27 Rev 1.
+Google Play Services is enabled for the SDK, or barcode cannot be detected.
