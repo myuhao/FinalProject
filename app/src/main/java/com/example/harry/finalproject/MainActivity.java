@@ -553,7 +553,9 @@ public class MainActivity extends AppCompatActivity {
      * Add the looked up item and its calories to this list.
      */
     protected void addProductToList() {
-        list.put(productName, nutVal);
+        if (productName == "" || nutVal == 0) {
+            return;
+        }
         Product newItem = new Product(productName, nutVal);
 //        ByteArrayOutputStream stream = new ByteArrayOutputStream();
 //        currentBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
